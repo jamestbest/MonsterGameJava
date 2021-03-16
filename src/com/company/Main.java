@@ -1,45 +1,173 @@
 package com.company;
 
-import javax.sound.sampled.AudioInputStream;
-import java.awt.image.AreaAveragingScaleFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.Random;
 import java.util.Scanner;
-
-import javafx.application.Application;
-import javafx.scene.media.AudioClip;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import java.io.File;
 
 public class Main {
 
 
-    private static Locations monster = new Locations();
-    private static Locations flask = new Locations();
-    private static Locations trapOne = new Locations();
-    private static Locations trapTwo = new Locations();
-    private static Locations player = new Locations();
+    private static final Locations monster = new Locations();
+    private static final Locations flask = new Locations();
+    private static final Locations trapOne = new Locations();
+    private static final Locations trapTwo = new Locations();
+    private static final Locations player = new Locations();
 
-    private static int length = 10;
-    private static int height = 10;
-    private static ArrayList<ArrayList<String>> TwoD = initialiseTwoDArray(length, height);
-
+    private static final int length = 5;
+    private static final int height = 5;
+    private static int waitTurns = 2;
+    private static final ArrayList<ArrayList<String>> TwoD = initialiseTwoDArray(length, height);
+    private static final ArrayList<ArrayList<ArrayList<Integer>>> ThreeD = initialiseThreeDArray(length, height);
 
     public static void main(String[] args) {
         System.out.println("Welcome to the monster game");
 
-        int length = 10;
-        int height = 10;
+        initialiseAllObjects();
 
-        ArrayList<ArrayList<ArrayList<Integer>>> ThreeD = initialiseThreeDArray(length, height);
+        boolean end = false;
+        boolean flaskWin = false;
+        boolean monsterWin = false;
+
+        player.showOb = true;
+
+        player.isShow(TwoD);
+        flask.isShow(TwoD);
+        monster.isShow(TwoD);
+        trapOne.isShow(TwoD);
+        trapTwo.isShow(TwoD);
+
+        while (!end) {
+
+            showTwoDRows(TwoD);
+            end = Choice();
+
+            updateObjectsShown();
+
+            if (checkIfPlayerOnMonster() || monster.showOb){
+                monster.showOb = true;
+
+            }
+            if (checkIfPlayerOnFlask()){
+                flaskWin = true;
+                end = true;
+            }
+            if (checkIfPlayerOnTrap() && !trapOne.showOb){
+                System.out.println("You have sprung one of the monsters traps, beware!");
+                monster.showOb = true;
+                trapOne.showOb = true;
+                trapTwo.showOb = true;
+                updateObjectsShown();
+
+                //when the player lands on a trap the player needs to move away from it
+                //as they are currently hidden when it spawns
+                //or place the player ontop of the flask when it spawns.
+
+            }
+            if (monster.showOb){
+                if (waitTurns == 0){
+                    movingMonster();
+                }
+                else{
+                    waitTurns--;
+                }
+                if(checkIfPlayerOnMonster()){
+                    end = true;
+                    monsterWin = true;
+                }
 
 
+            }
+
+
+        }
+        showTwoDRows(TwoD);
+        if(flaskWin){
+            System.out.println("You managed to escape with the flask in hand, Well done!");
+        }
+        else if(monsterWin){
+            System.out.println("Whilst searching for the magical flask you perished to the great beast below!");
+        }
+
+
+    }
+
+    public static void updateObjectsShown(){
+        monster.isShow(TwoD);
+        trapOne.isShow(TwoD);
+        trapTwo.isShow(TwoD);
+        flask.isShow(TwoD);
+        player.isShow(TwoD);
+    }
+
+    public static void movingMonster(){
+        int movement = 2;
+        for (int i = 0; i < movement; i++) {
+            monster.removeLocation(TwoD);
+            if (player.x < monster.x){
+                monster.moveX(-1);
+            }
+            else if(player.x > monster.x){
+                monster.moveX(1);
+            }
+            if (player.y < monster.y){
+                monster.moveY(-1);
+            }
+            else if(player.y > monster.y){
+                monster.moveY(1);
+            }
+            monster.setlocatio(TwoD);
+            movement--;
+        }
+
+    }
+
+    public static boolean checkIfPlayerOnMonster(){
+        if ((player.x == monster.x) && (player.y == monster.y)){
+            if (!monster.showOb){
+                System.out.println("You landed on the monster");
+                player.removeLocation(TwoD);
+                monster.setlocatio(TwoD);
+                movePlayerRandomly(1);
+                player.setlocatio(TwoD);
+            }
+            return true;
+
+        }
+        else{
+            return false;
+        }
+    }
+
+    public static void movePlayerRandomly(int numberOfMoves){
+        for (int i = 0; i < numberOfMoves; i++) {
+            if(player.x > 0){
+                player.moveX(-1);
+            }
+            else if(player.x < height-1){
+                player.moveX(1);
+            }
+            else if(player.y > 0){
+                player.moveY(-1);
+            }
+            else if (player.y < length -1){
+                player.moveY(1);
+            }
+
+        }
+    }
+
+    public static boolean checkIfPlayerOnTrap(){
+        if (player.x == trapOne.x && player.y == trapOne.y){
+            return true;
+        }
+        else return player.x == trapTwo.x && player.y == trapTwo.y;
+    }
+
+    public static boolean checkIfPlayerOnFlask(){
+        return player.x == flask.x && player.y == flask.y;
+    }
+
+    public static void initialiseAllObjects(){
         int[] temp = Createlocation(ThreeD);
         monster.x = temp[0];
         monster.y = temp[1];
@@ -64,25 +192,6 @@ public class Main {
         player.x = temp[0];
         player.y = temp[1];
         player.name = "P";
-
-
-        boolean end = false;
-        player.showOb = true;
-
-        player.isShow(TwoD);
-        flask.isShow(TwoD);
-        monster.isShow(TwoD);
-        trapOne.isShow(TwoD);
-        trapTwo.isShow(TwoD);
-
-        while (!end) {
-            showTwoDRows(TwoD);
-            end = Choice();
-
-
-        }
-
-
     }
 
     public static int[] Createlocation(ArrayList<ArrayList<ArrayList<Integer>>> ThreeD) {
@@ -99,16 +208,16 @@ public class Main {
     }
 
     public static void showThreeDIndividual(ArrayList<ArrayList<ArrayList<Integer>>> ThreeD) {
-        for (int i = 0; i < ThreeD.size(); i++) {
-            for (int j = 0; j < ThreeD.get(i).size(); j++) {
-                System.out.println(ThreeD.get(i).get(j));
+        for (ArrayList<ArrayList<Integer>> arrayLists : ThreeD) {
+            for (ArrayList<Integer> arrayList : arrayLists) {
+                System.out.println(arrayList);
             }
         }
     }
 
     public static void showThreeDRows(ArrayList<ArrayList<ArrayList<Integer>>> ThreeD) {
-        for (int i = 0; i < ThreeD.size(); i++) {
-            System.out.println(ThreeD.get(i));
+        for (ArrayList<ArrayList<Integer>> arrayLists : ThreeD) {
+            System.out.println(arrayLists);
         }
     }
 
@@ -144,8 +253,8 @@ public class Main {
     }
 
     public static void showTwoDRows(ArrayList<ArrayList<String>> TwoD) {
-        for (int i = 0; i < TwoD.size(); i++) {
-            System.out.println(TwoD.get(i));
+        for (ArrayList<String> strings : TwoD) {
+            System.out.println(strings);
         }
     }
 
@@ -154,7 +263,7 @@ public class Main {
         Scanner sc = new Scanner(System.in);
         String choice = sc.next();
 
-        if (choice.toLowerCase().equals("f")) {
+        if (choice.equalsIgnoreCase("f")) {
             return true;
         } else if ((choice.equalsIgnoreCase("w")) || (choice.equalsIgnoreCase("a")) || (choice.equalsIgnoreCase("s")) || (choice.equalsIgnoreCase("d"))) {
             movingPlayer(choice.toLowerCase());
@@ -168,17 +277,28 @@ public class Main {
 
     public static void movingPlayer(String movement) {
         player.removeLocation(TwoD);
-        if (movement.equals("w")) {
-            player.moveX(-1);
-        }
-        else if (movement.equals("d")){
-            player.moveY(1);
-        }
-        else if(movement.equals("s")){
-            player.moveX(1);
-        }
-        else if (movement.equals("a")){
-            player.moveY(-1);
+        switch (movement) {
+            case "w":
+                if (player.x > 0) {
+                    player.moveX(-1);
+                }
+                break;
+            case "d":
+                if (player.y < length - 1) {
+                    player.moveY(1);
+                }
+
+                break;
+            case "s":
+                if (player.x < height - 1) {
+                    player.moveX(1);
+                }
+                break;
+            case "a":
+                if (player.y > 0) {
+                    player.moveY(-1);
+                }
+                break;
         }
         player.setlocatio(TwoD);
     }
