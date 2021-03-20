@@ -24,7 +24,7 @@ public class Locations {
         }
     }
 
-    public void setlocatio(ArrayList<ArrayList<String>> TwoD){
+    public void setlocation(ArrayList<ArrayList<String>> TwoD){
         TwoD.get(this.x).set(this.y, this.name);
     }
 

@@ -23,6 +23,7 @@ public class Main {
     public static int height = 10;
     private static int waitTurns = 2;
     private static int numberOfLevelsLoaded = 0;
+    private static int currentLevel = 0;
     private static ArrayList<ArrayList<String>> TwoD;
     private static ArrayList<ArrayList<ArrayList<Integer>>> ThreeD = initialiseThreeDArray(length, height);
     private static boolean end = false;
@@ -31,11 +32,17 @@ public class Main {
     private static boolean fullend = false;
 
 
-    // TODO: 18/03/2021 fix bug: flask appeared on the last level, need to change flask is seen to flask is availible 
-    // TODO: 18/03/2021 or change it to check the number of levels loaded 
+
     // TODO: 18/03/2021 also need to add the ability to move back up the ladder to load an old level with the same info 
     // TODO: 18/03/2021 also need to add the monster[] to have a different amount of monster on each level 
-    // TODO: 18/03/2021 maybe have the player grab the flask and then have to travel back up the levels 
+    // TODO: 18/03/2021 maybe have the player grab the flask and then have to travel back up the levels
+    // TODO: 19/03/2021 bug: when you win the down will appear. 
+    // TODO: 19/03/2021 when you trigger the monster in an old level the monster won't give you any chance to escape on the next level, you will touch it and then the game ends
+    // TODO: 19/03/2021 when loading through a 'U' the locations are not saved
+    // TODO: 19/03/2021 either change the class to save the locations of the objects or go through each item in the Array and check for
+    // TODO: 19/03/2021 'M','P' ect.. and then save them as the new locations
+    // TODO: 19/03/2021 the height and length also don't change as you move up as they are based on the number of levels loaded
+    // TODO: 19/03/2021 instead have the height and length = to base + currentLevel
 
 
     public static void main(String[] args) {
@@ -46,7 +53,7 @@ public class Main {
         while (!fullend){
             while (!end) {
 
-
+                updateObjectsShown();
 
                 showTwoDRows(TwoD);
                 end = Choice();
@@ -58,9 +65,10 @@ public class Main {
                     monster.showOb = true;
 
                 }
-                if (checkIfPlayerOnFlask()&& flask.showOb == true){
+                if (checkIfPlayerOnFlask()&& currentLevel == 4){
                     flaskWin = true;
                     end = true;
+                    fullend = true;
                 }
                 if (checkIfPlayerOnTrap() && !trapOne.showOb){
                     System.out.println("You have sprung one of the monsters traps, beware!");
@@ -88,8 +96,25 @@ public class Main {
 
 
                 }
-                if(checkIfPlayerOnLadderDown() && ladderDown.showOb == true){
+                if(checkIfPlayerOnLadderDown() && ladderDown.showOb){
                     end = true;
+                    if (!fullend){
+                        currentLevel++;
+                        System.out.println("\n\n\n");
+                        System.out.println("You venture on to find the flask!");
+                        length++;
+                        height++;
+                        createNewLevel();
+                        end = false;
+                    }
+                }
+                if(checkIfPlayerOnLadderUp()){
+                    end = true;
+                    if (currentLevel != 0){
+                        System.out.println("going up");
+                        TwoD = LevelsArray[currentLevel-1].initialiseTwoDArray(length,height);
+                    }
+
                 }
 
 
@@ -104,14 +129,11 @@ public class Main {
                 fullend = true;
                 System.out.println("Whilst searching for the magical flask you perished to the great beast below!");
             }
-            if (!fullend){
-                System.out.println("\n\n\n");
-                System.out.println("You venture on to find the flask!");
-                length++;
-                height++;
-                createNewLevel();
+            else{
                 end = false;
             }
+
+
 
         }
 
@@ -125,6 +147,13 @@ public class Main {
         //create a new class for the levels and save the array to it <---
         //this will require changing alot of code but will make it much easier to check if the
         //level has already been loaded, stopping it from being overwritten.
+
+        //Most likely not going to use this method, instead the levels are stored inside the
+        //LevelsArray where you can easily index the next one needed and also check how many
+        //have been stored, however it may also be a good idea to create a save for all the levels
+        //and allow players to save and load the game at any time, however this may create some
+        //issues with how the game is currently creating new levels and so info such as no. levels
+        //loaded must also be saved.
     }
 
 
@@ -149,7 +178,8 @@ public class Main {
     }
 
     public static void createNewLevel(){
-        if (numberOfLevelsLoaded != 5){
+        if (currentLevel != 5){
+            waitTurns = 2;
             numberOfLevelsLoaded++;
             TwoD.clear();
             ThreeD.clear();
@@ -162,9 +192,8 @@ public class Main {
             ladderDown.showOb = true;
             updateObjectsShown();
         }
-        flask.showOb = numberOfLevelsLoaded >= 4;
-        ladderUp.showOb = numberOfLevelsLoaded > 0;
-        ladderDown.showOb = numberOfLevelsLoaded != 4;
+        ladderUp.showOb = currentLevel > 1;
+        ladderDown.showOb = currentLevel != 4;
 
     }
 
@@ -195,9 +224,18 @@ public class Main {
             else if(player.y > monster.y){
                 monster.moveY(1);
             }
-            monster.setlocatio(TwoD);
+            monster.setlocation(TwoD);
         }
 
+    }
+
+    public static boolean checkIfPlayerOnLadderUp(){
+        if(player.x == ladderUp.x && player.y == ladderUp.y && currentLevel > 1) {
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     public static boolean checkIfPlayerOnMonster(){
@@ -205,9 +243,9 @@ public class Main {
             if (!monster.showOb){
                 System.out.println("You landed on the monster");
                 player.removeLocation(TwoD);
-                monster.setlocatio(TwoD);
+                monster.setlocation(TwoD);
                 movePlayerRandomly(1);
-                player.setlocatio(TwoD);
+                player.setlocation(TwoD);
             }
             return true;
 
@@ -247,7 +285,12 @@ public class Main {
     }
 
     public static boolean checkIfPlayerOnFlask(){
-        return player.x == flask.x && player.y == flask.y;
+        if (currentLevel == 4){
+            return player.x == flask.x && player.y == flask.y;
+        }
+        else{
+            return false;
+        }
     }
 
     public static void initialiseAllObjects(){
@@ -383,7 +426,7 @@ public class Main {
                 }
                 break;
         }
-        player.setlocatio(TwoD);
+        player.setlocation(TwoD);
     }
 
 }
