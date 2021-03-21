@@ -6,7 +6,7 @@ public class Locations {
     int x;
     int y;
     boolean showOb = false;
-    boolean testing = false;
+    boolean testing = true;
     String name;
 
 

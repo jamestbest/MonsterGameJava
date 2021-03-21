@@ -1,5 +1,7 @@
 package com.company;
 
+import jdk.swing.interop.SwingInterOpUtils;
+
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -16,7 +18,7 @@ public class Main {
     private static final Locations ladderDown = new Locations();
     private static final Locations ladderUp = new Locations();
 
-    private static Levels LevelsArray[] = new Levels[5];
+    private static Levels LevelsArray[] = new Levels[6];
 
     // to go back up the ladder the map must be saved to a location
     public static int length = 10;
@@ -36,13 +38,13 @@ public class Main {
     // TODO: 18/03/2021 also need to add the ability to move back up the ladder to load an old level with the same info 
     // TODO: 18/03/2021 also need to add the monster[] to have a different amount of monster on each level 
     // TODO: 18/03/2021 maybe have the player grab the flask and then have to travel back up the levels
-    // TODO: 19/03/2021 bug: when you win the down will appear. 
-    // TODO: 19/03/2021 when you trigger the monster in an old level the monster won't give you any chance to escape on the next level, you will touch it and then the game ends
+    // TODO: 19/03/2021 bug: when you win the down will appear. (May have been fixed)
+    // FIXED: 19/03/2021 when you trigger the monster in an old level the monster won't give you any chance to escape on the next level, you will touch it and then the game ends
     // TODO: 19/03/2021 when loading through a 'U' the locations are not saved
-    // TODO: 19/03/2021 either change the class to save the locations of the objects or go through each item in the Array and check for
+    // TODO: 19/03/2021 either change the class to save the objects or go through each item in the Array and check for
     // TODO: 19/03/2021 'M','P' ect.. and then save them as the new locations
-    // TODO: 19/03/2021 the height and length also don't change as you move up as they are based on the number of levels loaded
-    // TODO: 19/03/2021 instead have the height and length = to base + currentLevel
+    // FIXED: 19/03/2021 the height and length also don't change as you move up as they are based on the number of levels loaded
+    // FIXED: 19/03/2021 instead have the height and length = to base + currentLevel
 
 
     public static void main(String[] args) {
@@ -52,6 +54,13 @@ public class Main {
         createNewLevel();
         while (!fullend){
             while (!end) {
+                System.out.println("checking ladder" + currentLevel);
+                if (currentLevel > 3){
+                    System.out.println("hiding ladder");
+                    ladderDown.showOb = false;
+                    ladderDown.removeLocation(TwoD);
+                    updateObjectsShown();
+                }
 
                 updateObjectsShown();
 
@@ -95,18 +104,27 @@ public class Main {
                     }
 
 
+
                 }
+
+
+
+
                 if(checkIfPlayerOnLadderDown() && ladderDown.showOb){
                     end = true;
-                    if (!fullend){
-                        currentLevel++;
-                        System.out.println("\n\n\n");
-                        System.out.println("You venture on to find the flask!");
-                        length++;
-                        height++;
-                        createNewLevel();
-                        end = false;
+                    if (!fullend && currentLevel != 4){
+                        if (currentLevel != 4){
+                            System.out.println("creating new level");
+                            currentLevel++;
+                            System.out.println("\n\n\n");
+                            System.out.println("You venture on to find the flask!");
+                            createNewLevel();
+                            end = false;
+                        }
+
+
                     }
+
                 }
                 if(checkIfPlayerOnLadderUp()){
                     end = true;
@@ -178,22 +196,19 @@ public class Main {
     }
 
     public static void createNewLevel(){
-        if (currentLevel != 5){
-            waitTurns = 2;
-            numberOfLevelsLoaded++;
-            TwoD.clear();
-            ThreeD.clear();
-            LevelsArray[numberOfLevelsLoaded] = new Levels();
-            TwoD = LevelsArray[numberOfLevelsLoaded].initialiseTwoDArray(length,height);
-            ThreeD = initialiseThreeDArray(length,height);
-            hideAllObjects();
-            initialiseAllObjects();
-            player.showOb = true;
-            ladderDown.showOb = true;
-            updateObjectsShown();
-        }
+        waitTurns = 2;
+        numberOfLevelsLoaded++;
+        TwoD.clear();
+        ThreeD.clear();
+        LevelsArray[numberOfLevelsLoaded] = new Levels();
+        TwoD = LevelsArray[numberOfLevelsLoaded].initialiseTwoDArray(length+currentLevel,height+currentLevel);
+        ThreeD = initialiseThreeDArray(length+currentLevel,height+currentLevel);
+        hideAllObjects();
+        initialiseAllObjects();
+        player.showOb = true;
+        ladderDown.showOb = true;
         ladderUp.showOb = currentLevel > 1;
-        ladderDown.showOb = currentLevel != 4;
+        updateObjectsShown();
 
     }
 
